@@ -21,8 +21,6 @@
 | 設定 | [config.txt](config.txt) | モニターごとの変更方法（random / keep）と画像フォルダーを指定する |
 | Windows 連携 | .NET / Windows Shell | ファイル操作、名前付き Mutex、WScript.Shell (COM) によるショートカット管理 |
 
-readme.txt、architecture.md、図の SVG、.gitignore は実行に関わらないため、図には含めない。
-
 ### Action と起動元
 
 | Action | 起動元 | 処理内容 |
