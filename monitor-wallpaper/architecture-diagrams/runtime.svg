@@ -1,26 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 460" width="560" height="460" role="img" aria-label="runtime architecture">
-<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#536779"/></marker></defs>
-<rect width="560" height="460" rx="12" fill="#ffffff"/>
-<rect x="12.25" y="174" width="535.5" height="184" rx="12" fill="#eef4fa" stroke="#aabccd" stroke-width="1.5" stroke-dasharray="5 4"/>
-<text x="26.25" y="198" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#34536e">powershell.exe</text>
-<path d="M415.62 72 V100" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M415.62 148 V188 H306.25 V218" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M144.38 72 V188 H253.75 V218" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M280 266 V294" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M218.75 342 V372 H144.38 V394" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<path d="M406 242 H463.75 V394" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<rect x="24.5" y="24" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
-<text x="144.375" y="54" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Batch files</text>
-<rect x="295.75" y="24" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
-<text x="415.625" y="54" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Windows shortcuts</text>
-<rect x="295.75" y="100" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
-<text x="415.625" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">MonitorWallpaper.exe</text>
-<rect x="154" y="218" width="252" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
-<text x="280" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Wallpaper.ps1</text>
-<rect x="154" y="294" width="252" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
-<text x="280" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">DesktopWallpaper class</text>
-<rect x="24.5" y="394" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
-<text x="144.375" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Win32 / COM</text>
-<rect x="295.75" y="394" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
-<text x="415.625" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">.NET / Windows Shell</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 590" width="640" height="590" role="img" aria-label="Runtime architecture and source files">
+<title>Runtime architecture and source files</title>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#536779"/></marker></defs>
+<rect width="640" height="590" rx="12" fill="#fff"/>
+<g fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#a)">
+<path d="M194 49 H245 V260"/><path d="M194 111 H245" marker-end="none"/><path d="M194 173 H245" marker-end="none"/>
+<path d="M495 144 V166"/><path d="M495 216 V236 H375 V260"/>
+<path d="M245 310 V332 H112 V360"/><path d="M310 310 V360"/><path d="M375 310 V332 H522 V360"/>
+<path d="M522 410 V445" stroke-dasharray="5 4"/><path d="M428 285 H630 V470 H620"/><path d="M522 495 V525"/>
+<path d="M600 45 H624 V191 H600" stroke-dasharray="5 4"/>
+</g>
+<g fill="#fff" stroke="#60798f" stroke-width="1.5">
+<rect x="20" y="24" width="174" height="50" rx="8"/><rect x="20" y="86" width="174" height="50" rx="8"/><rect x="20" y="148" width="174" height="50" rx="8"/>
+<rect x="390" y="94" width="210" height="50" rx="8"/><rect x="390" y="166" width="210" height="50" rx="8"/>
+<rect x="192" y="260" width="236" height="50" rx="8" fill="#e7f0fa"/>
+<rect x="220" y="360" width="180" height="50" rx="8"/><rect x="425" y="445" width="195" height="50" rx="8" fill="#e7f0fa"/><rect x="425" y="525" width="195" height="50" rx="8"/>
+</g>
+<g fill="#f4f7fa" stroke="#8a9bad" stroke-width="1.5" stroke-dasharray="5 4">
+<rect x="390" y="20" width="210" height="50" rx="8"/>
+<rect x="20" y="360" width="185" height="72" rx="8"/>
+<rect x="425" y="360" width="195" height="50" rx="8"/>
+</g>
+<g font-family="Arial, sans-serif" font-size="18" fill="#182b3d" text-anchor="middle">
+<text x="107" y="46">Setup.bat</text><text x="107" y="63" font-size="12">Setup</text>
+<text x="107" y="108">Reroll.bat</text><text x="107" y="125" font-size="12">Apply</text>
+<text x="107" y="170">StopStartup.bat</text><text x="107" y="187" font-size="12">StopStartup</text>
+<text x="495" y="42">Launcher.cs</text><text x="495" y="59" font-size="12">Setup build input</text>
+<text x="495" y="115">Windows shortcuts</text><text x="495" y="132" font-size="12">Apply / Startup</text>
+<text x="495" y="195" font-size="17">MonitorWallpaper.exe</text>
+<text x="310" y="281">Wallpaper.ps1</text><text x="310" y="299" font-size="13">powershell.exe</text>
+<text x="112.5" y="382">config.txt</text><text x="112.5" y="401" font-size="15">config.local.txt</text><text x="112.5" y="418" font-size="12">Optional override</text>
+<text x="310" y="390" font-size="17">.NET / Shell</text>
+<text x="522.5" y="390" font-size="17">DesktopWallpaper.cs</text>
+<text x="522.5" y="467" font-size="17">DesktopWallpaper</text><text x="522.5" y="484" font-size="12">Same process</text>
+<text x="522.5" y="555">Win32 / COM</text>
+</g>
+<g font-family="Arial, sans-serif" font-size="13" fill="#34536e" text-anchor="middle">
+<text x="104" y="351" text-anchor="end">Read settings</text><text x="530" y="351" text-anchor="start">Add-Type</text><text x="514" y="435" text-anchor="end">Compile / load</text><text x="526" y="277">Direct call</text>
+</g>
 </svg>

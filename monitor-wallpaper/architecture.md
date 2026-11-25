@@ -6,15 +6,20 @@
 
 ![Runtime architecture](architecture-diagrams/runtime.svg)
 
-矢印は主な起動経路および依存関係を示す。バッチファイルとランチャーは Windows PowerShell 5.1（powershell.exe）を起動する。Wallpaper.ps1 はそのプロセス内で実行され、必要な場合に DesktopWallpaper.cs をコンパイルして読み込む。ランチャーはコンソールを表示せず、子プロセスの終了を待たないため、壁紙変更の終了コードは取得しない。
+この図はツール全体の見取り図であり、実行に関係するリポジトリ内の7ファイルをすべて個別に示す。実線は起動・呼び出し・参照、破線の枠は C# ソースまたは設定ファイル、破線の矢印はビルド・コンパイルによる生成関係を示す。`Launcher.cs` は Setup 時のビルド入力であり、通常の起動時には生成済みの `MonitorWallpaper.exe` が実行される。`DesktopWallpaper.cs` は必要時に読み込まれ、生成されたクラスが PowerShell と同一プロセス内で実行される。バッチファイルとランチャーは Windows PowerShell 5.1（powershell.exe）を起動する。Wallpaper.ps1 はそのプロセス内で実行され、必要な場合に DesktopWallpaper.cs をコンパイルして読み込む。ランチャーはコンソールを表示せず、子プロセスの終了を待たないため、壁紙変更の終了コードは取得しない。
 
 | 層 | モジュール | 責務 |
 | --- | --- | --- |
-| ユーザーインターフェース | バッチファイル | PowerShell の起動、終了コードの伝搬 |
+| ユーザーインターフェース | [Setup.bat](Setup.bat) | Setup を要求し、終了コードを伝搬する。 |
+| ユーザーインターフェース | [Reroll.bat](Reroll.bat) | Apply を要求し、終了コードを伝搬する。 |
+| ユーザーインターフェース | [StopStartup.bat](StopStartup.bat) | StopStartup を要求し、終了コードを伝搬する。 |
 | ユーザーインターフェース | [Launcher.cs](internal/Launcher.cs) | コンソールを表示せずに PowerShell を起動する。MonitorWallpaper.exe としてビルドされる。 |
 | アプリケーションロジック | [Wallpaper.ps1](internal/Wallpaper.ps1) | Action の振り分け、設定の読み込み、画像選択、ショートカット管理、排他制御、実行結果の記録 |
 | Windows 連携 | [DesktopWallpaper.cs](internal/DesktopWallpaper.cs) | モニターの識別、壁紙の取得・設定。EnumDisplayDevicesW と IDesktopWallpaper を利用する。 |
+| 設定 | [config.txt](config.txt) | モニターごとの random / keep と画像フォルダーを定義する。config.local.txt が存在する場合はそちらを優先する。 |
 | Windows 連携 | .NET / Windows Shell | ファイル操作、名前付き Mutex、WScript.Shell (COM) によるショートカット管理 |
+
+実装ファイル7つに加え、実行時の生成物・OS機能・任意のローカル設定も図に示す。readme.txt、architecture.md、図の SVG、.gitignore は実行に関与しないため図の対象外とする。以降の節ではビルドやランタイムコンパイルなど、個々の仕組みに焦点を当てる。
 
 ### Action の起動経路
 
@@ -26,7 +31,7 @@
 | スタートメニューのショートカット | Apply |
 | スタートアップのショートカット | Startup |
 
-4 種類の Action は独立したスクリプトではなく、Wallpaper.ps1 内の処理分岐である。Setup は登録のみを行い、その場で壁紙を変更しない。Apply と Startup は共通の壁紙変更処理を利用し、keep の画面と設定にない画面は変更しない。すべて keep の場合は C# のコンパイルも行わない。
+4 種類の Action は独立したスクリプトではなく、Wallpaper.ps1 内の処理分岐である。Setup は登録のみを行い、その場で壁紙を変更しない。Apply と Startup は共通の壁紙変更処理を利用し、keep の画面と設定にない画面は変更しない。Apply と Startup ではすべて keep の場合、DesktopWallpaper.cs のコンパイルを行わない。
 
 | Action | 責務 |
 | --- | --- |
