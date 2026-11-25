@@ -1,8 +1,8 @@
-# Monitor Wallpaper Architecture
+# Monitor Wallpaper アーキテクチャ
 
-A Windows utility that randomizes wallpaper independently for each configured monitor.
+モニターごとに壁紙をランダムに変更する Windows 向けユーティリティ。
 
-## 1. Runtime architecture
+## 1. 実行時のアーキテクチャ（Runtime Architecture）
 
 ```mermaid
 flowchart TD
@@ -22,38 +22,38 @@ flowchart TD
     PS --> OS
 ```
 
-Arrows show the main launch or dependency direction. The batch files and launcher start Windows PowerShell 5.1. The launcher hides the console and does not wait for the child process to exit.
+矢印は主な起動経路および依存関係を示す。バッチファイルとランチャーは Windows PowerShell 5.1 を起動する。ランチャーはコンソールを表示せず、子プロセスの終了を待たない。
 
-| Layer | Module | Responsibility |
+| 層 | モジュール | 責務 |
 | --- | --- | --- |
-| Entry points | Batch files | Launch PowerShell and forward exit codes. |
-| Entry points | [Launcher.cs](internal/Launcher.cs) | Launch PowerShell without a console window. Built as MonitorWallpaper.exe. |
-| Application | [Wallpaper.ps1](internal/Wallpaper.ps1) | Dispatch actions, read configuration, select images, manage shortcuts, synchronize execution, and record results. |
-| Windows integration | [DesktopWallpaper.cs](internal/DesktopWallpaper.cs) | Identify monitors and get or set wallpaper. Calls EnumDisplayDevicesW and IDesktopWallpaper. |
-| Windows integration | .NET / Windows Shell | File operations, named mutex, and shortcut management via WScript.Shell (COM). |
+| ユーザーインターフェース | バッチファイル | PowerShell の起動、終了コードの伝搬 |
+| ユーザーインターフェース | [Launcher.cs](internal/Launcher.cs) | コンソールを表示せずに PowerShell を起動する。MonitorWallpaper.exe としてビルドされる。 |
+| アプリケーションロジック | [Wallpaper.ps1](internal/Wallpaper.ps1) | Action の振り分け、設定の読み込み、画像選択、ショートカット管理、排他制御、実行結果の記録 |
+| Windows 連携 | [DesktopWallpaper.cs](internal/DesktopWallpaper.cs) | モニターの識別、壁紙の取得・設定。EnumDisplayDevicesW と IDesktopWallpaper を利用する。 |
+| Windows 連携 | .NET / Windows Shell | ファイル操作、名前付き Mutex、WScript.Shell (COM) によるショートカット管理 |
 
-### Action routing
+### Action の起動経路
 
-| Entry point | Action |
+| 起動元 | Action |
 | --- | --- |
 | [Setup.bat](Setup.bat) | Setup |
 | [Reroll.bat](Reroll.bat) | Apply |
 | [StopStartup.bat](StopStartup.bat) | StopStartup |
-| Start menu shortcut | Apply |
-| Startup shortcut | Startup |
+| スタートメニューのショートカット | Apply |
+| スタートアップのショートカット | Startup |
 
-The four actions are branches within Wallpaper.ps1, not separate scripts.
+4 種類の Action は独立したスクリプトではなく、Wallpaper.ps1 内の処理分岐である。
 
-| Action | Responsibility |
+| Action | 責務 |
 | --- | --- |
-| Setup | Validate configuration and image folders, build the launcher, register shortcuts, and remove the matching legacy startup registration. |
-| Apply | Change wallpaper for monitors configured as random. |
-| Startup | Apply wallpaper at sign-in; wait up to 20 seconds for missing monitors. |
-| StopStartup | Remove current and legacy startup shortcuts only if their targets match the corresponding launchers. Keep the manual shortcut and executable. |
+| Setup | 設定と画像フォルダーを検証し、ランチャーをビルドしてショートカットを登録する。対象が一致する旧版のスタートアップ登録も削除する。 |
+| Apply | random に設定されたモニターの壁紙を変更する。 |
+| Startup | Windows サインイン時に壁紙を変更する。未認識のモニターがある場合は最大 20 秒間待機する。 |
+| StopStartup | 対応するランチャーを指している現行版・旧版のスタートアップショートカットのみ削除する。手動起動用のショートカットと EXE は維持する。 |
 
-## 2. Build architecture
+## 2. ビルド時のアーキテクチャ（Build Architecture）
 
-The launcher is built locally when Setup runs. Visual Studio and a separate .NET SDK are not required for this Windows PowerShell 5.1 build path.
+Setup の実行時に、利用者の PC 上でランチャーをビルドする。Windows PowerShell 5.1 の機能を利用するため、Visual Studio や別途 .NET SDK をインストールする必要はない。
 
 ```mermaid
 flowchart TD
@@ -75,9 +75,9 @@ flowchart TD
     TMP --> EXE
 ```
 
-Windows PowerShell 5.1 uses the .NET Framework C# compilation infrastructure. The resulting launcher is a managed Windows GUI executable, rather than a console application.
+Windows PowerShell 5.1 は .NET Framework の C# コンパイル機構を利用する。生成されるランチャーは、コンソールアプリケーションではなく、マネージドコードの Windows GUI アプリケーションである。
 
-The build command in Wallpaper.ps1 is:
+Wallpaper.ps1 内のビルド処理は以下のとおり。
 
 ```powershell
 Add-Type -LiteralPath (Join-Path $PSScriptRoot 'Launcher.cs') `
@@ -86,16 +86,16 @@ Add-Type -LiteralPath (Join-Path $PSScriptRoot 'Launcher.cs') `
     -OutputType WindowsApplication
 ```
 
-| Build option | Purpose |
+| ビルドオプション | 役割 |
 | --- | --- |
-| LiteralPath | Select the C# source file. |
-| ReferencedAssemblies | Reference Windows Forms for warning dialogs. |
-| OutputAssembly | Write a temporary executable with a unique name. |
-| OutputType | Generate a Windows GUI application. |
+| LiteralPath | コンパイル対象の C# ソースファイルを指定する。 |
+| ReferencedAssemblies | 警告ダイアログの表示に必要な Windows Forms を参照する。 |
+| OutputAssembly | 一意な名前の一時 EXE ファイルを出力する。 |
+| OutputType | Windows GUI アプリケーション形式で生成する。 |
 
-Setup moves or replaces the temporary executable at the final path, then creates the Start menu and Startup shortcuts using WScript.Shell. Both shortcuts target MonitorWallpaper.exe and pass the absolute Wallpaper.ps1 path and the corresponding action.
+Setup は一時 EXE を正式な配置先へ移動または置換した後、WScript.Shell を利用してスタートメニューとスタートアップのショートカットを生成する。どちらも MonitorWallpaper.exe を起動し、Wallpaper.ps1 の絶対パスと対応する Action を引数として渡す。
 
-### Installed launcher
+### インストール済みランチャーの起動経路
 
 ```mermaid
 flowchart TD
@@ -111,11 +111,11 @@ flowchart TD
     PS --> SCRIPT
 ```
 
-The launcher uses Process.Start with UseShellExecute set to false and CreateNoWindow set to true. It also passes the script's Hidden switch.
+ランチャーは Process.Start を使用し、UseShellExecute を false、CreateNoWindow を true に設定して PowerShell を起動する。また、スクリプト独自の Hidden スイッチを渡す。
 
-## 3. In-memory compilation
+## 3. メモリ上でのコンパイル（In-memory Compilation）
 
-DesktopWallpaper.cs is compiled separately when Apply or Startup needs to change wallpaper. Unlike the launcher, it is loaded into the existing PowerShell process.
+Apply または Startup で壁紙変更が必要な場合、DesktopWallpaper.cs を別途コンパイルする。ランチャーとは異なり、コンパイルしたアセンブリは実行中の PowerShell プロセス内に読み込まれる。
 
 ```mermaid
 flowchart TD
@@ -135,27 +135,27 @@ flowchart TD
     OBJ --> WIN32
 ```
 
-PowerShell creates an instance of the compiled class and calls its methods directly. No separate wallpaper worker EXE is generated.
+PowerShell はコンパイルしたクラスのインスタンスを生成し、メソッドを直接呼び出す。壁紙変更専用の独立した EXE は生成しない。
 
-| | Launcher.cs | DesktopWallpaper.cs |
+| 比較項目 | Launcher.cs | DesktopWallpaper.cs |
 | --- | --- | --- |
-| When compiled | Setup | Apply or Startup, when needed |
-| Build output | Windows GUI EXE | In-memory assembly |
-| Execution | Separate process | Inside PowerShell |
-| Purpose | Start PowerShell | Access Windows APIs and COM |
+| コンパイル時期 | Setup | Apply または Startup（必要時） |
+| 生成物 | Windows GUI アプリケーション（EXE） | メモリ上のアセンブリ |
+| 実行形態 | 独立したプロセス | PowerShell プロセス内 |
+| 目的 | PowerShell の起動 | Windows API / COM の操作 |
 
-## 4. Shared resources and synchronization
+## 4. 共有リソースと排他制御
 
-All four actions acquire the same session-local named mutex (`Local\Freely.MonitorWallpaper`) before entering their main processing block. The lock is retained through execution and, for wallpaper changes, log writing. The acquisition timeout is 30 seconds.
+すべての Action は、主処理に入る前に同じ名前付き Mutex（`Local\Freely.MonitorWallpaper`）の所有権を取得する。同一 Windows セッション内での同時実行を防ぎ、壁紙変更時のログ書き込みまでロックを保持する。取得待ちのタイムアウトは 30 秒である。
 
-The legacy mutex name is deliberately retained for compatibility with older copies of the tool.
+旧版のツールとの排他制御の互換性を維持するため、Mutex 名は意図的に旧版の名称を使用している。
 
-| Resource | Location or behavior |
+| リソース | 保存先・動作 |
 | --- | --- |
-| Default configuration | [config.txt](config.txt) |
-| Local override | config.local.txt, when present |
-| Installed launcher | `%LOCALAPPDATA%\MyTools\MonitorWallpaper\MonitorWallpaper.exe` |
-| Run logs | last-reroll.txt and last-startup.txt in the same data folder |
-| Shortcuts | Current user's Start menu and Startup folders |
+| 既定の設定 | [config.txt](config.txt) |
+| ローカル設定 | config.local.txt が存在する場合は優先する。 |
+| インストール済みランチャー | `%LOCALAPPDATA%\MyTools\MonitorWallpaper\MonitorWallpaper.exe` |
+| 実行ログ | 同じデータフォルダー内の last-reroll.txt、last-startup.txt |
+| ショートカット | 現在のユーザーのスタートメニューとスタートアップフォルダー |
 
-Shortcuts reference the folder where Setup was run. If the tool is moved, run Setup.bat from the new location to update the registration.
+ショートカットは Setup を実行したフォルダーを参照する。ツールを移動した場合は、移動先で Setup.bat を実行して登録を更新する。
