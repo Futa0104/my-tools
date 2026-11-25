@@ -8,7 +8,7 @@
 
 実行に関わる7つのファイルと、生成物や OS の機能を示す。実線の矢印は起動・呼び出し・参照、破線の矢印はビルド・コンパイルを表す。破線の枠は C# ソースまたは設定ファイルを示す。
 
-バッチファイルとランチャーは Windows PowerShell 5.1（`powershell.exe`）を起動する。`Launcher.cs` は Setup 時に EXE に変換し、`DesktopWallpaper.cs` は壁紙変更時に必要に応じてコンパイルする。
+バッチファイルとランチャーは Windows PowerShell 5.1（`powershell.exe`）を起動する。
 
 | 層 | モジュール | 役割 |
 | --- | --- | --- |
@@ -21,6 +21,16 @@
 | 設定 | [config.txt](config.txt) | モニターごとの変更方法（random / keep）と画像フォルダーを指定する |
 | Windows 連携 | .NET / Windows Shell | ファイル操作、名前付き Mutex、WScript.Shell (COM) によるショートカット管理 |
 
+### コンパイルと実行のタイミング
+
+| ファイル | 言語 | コンパイル・実行のタイミング | 生成物 |
+| --- | --- | --- | --- |
+| Wallpaper.ps1 | PowerShell | 起動するたびに読み込んで実行（事前ビルド不要） | 永続的なビルド成果物なし |
+| Launcher.cs | C# | Setup 時にコンパイル。ショートカットからの起動時はビルド済みの EXE を実行 | MonitorWallpaper.exe |
+| DesktopWallpaper.cs | C# | Apply / Startup 時に必要に応じてコンパイルし、PowerShell プロセス内で実行 | メモリ上のアセンブリ |
+
+C# のコンパイルは `Wallpaper.ps1` が管理する。`Launcher.cs` を変更した場合は Setup.bat の再実行が必要。`Wallpaper.ps1` は次回実行時、`DesktopWallpaper.cs` は次回の壁紙変更処理時に変更が反映される。
+
 ### Action と起動元
 
 | Action | 起動元 | 処理内容 |
@@ -30,7 +40,7 @@
 | Startup | スタートアップのショートカット | サインイン時に壁紙を変更する。対象モニターが見つからない場合は、約20秒を上限に再取得を試みる（API の処理時間などを除く） |
 | StopStartup | [StopStartup.bat](StopStartup.bat) | 対応するランチャーを参照する現行版・旧版のスタートアップショートカットを削除する。手動起動用のショートカットと EXE は残す |
 
-4つの Action は `Wallpaper.ps1` 内で処理を切り替える。Setup では壁紙を変更しない。Apply と Startup は壁紙変更処理を共有し、keep に設定したモニターや設定にないモニターは変更しない。すべて keep の場合は DesktopWallpaper.cs のコンパイルも行わない。
+4つの Action は `Wallpaper.ps1` 内で処理を切り替える。Setup では壁紙を変更しない。Apply と Startup は壁紙変更処理を共有し、keep に設定したモニターや設定にないモニターは変更しない。Apply / Startup では、すべて keep の場合は DesktopWallpaper.cs をコンパイルしない。
 
 ## 2. ビルド時のアーキテクチャ（Build Architecture）
 
@@ -87,13 +97,6 @@ $monitors = $desktop.GetMonitors()
 壁紙の変更には `$desktop.SetWallpaper($monitor.Id, $image.FullName)` を使う。CLR はアセンブリ内の CIL を必要に応じて JIT コンパイルする。壁紙変更用の EXE や DLL は保存しないが、コンパイラが一時ファイルや別プロセスを利用する場合はある。
 
 C# は P/Invoke で user32.dll の EnumDisplayDevicesW を呼び出し、モニターのデバイスパスを照合する。COM の IDesktopWallpaper で壁紙を取得・設定し、処理終了時に Dispose() で COM オブジェクトを解放する。
-
-| 比較項目 | Launcher.cs | DesktopWallpaper.cs |
-| --- | --- | --- |
-| コンパイル時期 | Setup | Apply / Startup（必要時） |
-| 生成物 | Windows GUI アプリケーション（EXE） | メモリ上のアセンブリ |
-| 実行場所 | 独立したプロセス | PowerShell プロセス内 |
-| 目的 | PowerShell の起動 | Windows API / COM の操作 |
 
 ## 4. 共有リソースと排他制御
 
