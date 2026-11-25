@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 460" width="560" height="460" role="img" aria-label="runtime architecture">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#536779"/></marker></defs>
+<rect width="560" height="460" rx="12" fill="#ffffff"/>
+<rect x="12.25" y="174" width="535.5" height="184" rx="12" fill="#eef4fa" stroke="#aabccd" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="26.25" y="198" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#34536e">powershell.exe</text>
+<path d="M415.62 72 V100" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M415.62 148 V188 H306.25 V218" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M144.38 72 V188 H253.75 V218" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M280 266 V294" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M218.75 342 V372 H144.38 V394" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M406 242 H463.75 V394" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="24.5" y="24" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="144.375" y="54" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Batch files</text>
+<rect x="295.75" y="24" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="415.625" y="54" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Windows shortcuts</text>
+<rect x="295.75" y="100" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="415.625" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">MonitorWallpaper.exe</text>
+<rect x="154" y="218" width="252" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="280" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Wallpaper.ps1</text>
+<rect x="154" y="294" width="252" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="280" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">DesktopWallpaper class</text>
+<rect x="24.5" y="394" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="144.375" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Win32 / COM</text>
+<rect x="295.75" y="394" width="239.75" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="415.625" y="424" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">.NET / Windows Shell</text>
+</svg>

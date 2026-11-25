@@ -4,23 +4,7 @@
 
 ## 1. 実行時のアーキテクチャ（Runtime Architecture）
 
-```mermaid
-flowchart TD
-    BAT["Batch files"]
-    LINK["Windows shortcuts"]
-    EXE["MonitorWallpaper.exe"]
-    PS["Wallpaper.ps1"]
-    CS["DesktopWallpaper.cs"]
-    API["Win32 / COM"]
-    OS[".NET / Windows Shell"]
-
-    LINK --> EXE
-    EXE --> PS
-    BAT --> PS
-    PS --> CS
-    CS --> API
-    PS --> OS
-```
+![Runtime architecture](architecture-diagrams/runtime.svg)
 
 矢印は主な起動経路および依存関係を示す。バッチファイルとランチャーは Windows PowerShell 5.1（powershell.exe）を起動する。Wallpaper.ps1 はそのプロセス内で実行され、必要な場合に DesktopWallpaper.cs をコンパイルして読み込む。ランチャーはコンソールを表示せず、子プロセスの終了を待たないため、壁紙変更の終了コードは取得しない。
 
@@ -55,25 +39,7 @@ flowchart TD
 
 Setup の実行時に、利用者の PC 上でランチャーをビルドする。Windows PowerShell 5.1 の機能を利用するため、Visual Studio や別途 .NET SDK をインストールする必要はない。
 
-```mermaid
-flowchart TD
-    BAT["Setup.bat"]
-    PS["Wallpaper.ps1"]
-    BUILD["Install-Shortcuts"]
-    SRC["Launcher.cs"]
-    ADD["Add-Type"]
-    CSC["C# compiler"]
-    TMP["Temporary EXE"]
-    EXE["MonitorWallpaper.exe"]
-
-    BAT --> PS
-    PS --> BUILD
-    BUILD --> ADD
-    SRC --> ADD
-    ADD --> CSC
-    CSC --> TMP
-    TMP --> EXE
-```
+![Launcher build architecture](architecture-diagrams/build.svg)
 
 Windows PowerShell 5.1 は .NET Framework の C# コンパイル機構を利用する。生成されるランチャーは、コンソールアプリケーションではなく、マネージドコードの Windows GUI アプリケーションである。EXE には CIL（中間言語）と型情報などが含まれ、実行時に CLR が必要なメソッドを JIT コンパイルする。
 
@@ -97,19 +63,7 @@ Setup は一時 EXE を正式な配置先へ移動または置換した後、WSc
 
 ### インストール済みランチャーの起動経路
 
-```mermaid
-flowchart TD
-    MENU["Start menu"]
-    START["Windows sign-in"]
-    EXE["MonitorWallpaper.exe"]
-    PS["powershell.exe"]
-    SCRIPT["Wallpaper.ps1"]
-
-    MENU -->|Apply| EXE
-    START -->|Startup| EXE
-    EXE -->|No console| PS
-    PS --> SCRIPT
-```
+![Installed launcher](architecture-diagrams/launcher.svg)
 
 ランチャーは Process.Start を使用し、UseShellExecute を false、CreateNoWindow を true に設定して PowerShell を起動する。また、スクリプト独自の Hidden スイッチを渡す。起動失敗時は Apply の場合のみ警告を表示する。スクリプト内部のエラーは Wallpaper.ps1 側で処理する。
 
@@ -119,23 +73,7 @@ Apply または Startup で壁紙変更が必要な場合、DesktopWallpaper.cs 
 
 **PowerShell と C# は共通の .NET ランタイム（CLR）を利用するため、C# のクラスを EXE にして別プロセスとして起動しなくても、PowerShell から直接生成・呼び出しできる。** 今回は Add-Type でコンパイルしたアセンブリを実行中の powershell.exe にロードしており、PowerShell と C# のメソッド呼び出しは同じプロセス内で完結する。両者間の IPC（プロセス間通信）は不要である。
 
-```mermaid
-flowchart TD
-    PS["Wallpaper.ps1"]
-    SRC["DesktopWallpaper.cs"]
-    ADD["Add-Type"]
-    ASM["In-memory assembly"]
-    OBJ["DesktopWallpaper"]
-    COM["IDesktopWallpaper"]
-    WIN32["EnumDisplayDevicesW"]
-
-    PS --> ADD
-    SRC --> ADD
-    ADD --> ASM
-    ASM --> OBJ
-    OBJ --> COM
-    OBJ --> WIN32
-```
+![In-process C# compilation](architecture-diagrams/in-memory.svg)
 
 実際の Wallpaper.ps1 では次のようにクラスを読み込み、インスタンスを生成している。
 

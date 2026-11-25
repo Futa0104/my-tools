@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 546" width="480" height="546" role="img" aria-label="build architecture">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#536779"/></marker></defs>
+<rect width="480" height="546" rx="12" fill="#ffffff"/>
+<path d="M240 62 V86" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M240 128 V152" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M240 194 V206 H356 V218" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M228 239 H252" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M356 260 V272 H240 V284" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M240 326 V350" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M240 392 V416" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M240 458 V482" fill="none" stroke="#536779" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="112" y="20" width="256" height="42" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="240" y="47" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Setup.bat</text>
+<rect x="112" y="86" width="256" height="42" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="240" y="113" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Wallpaper.ps1</text>
+<rect x="112" y="152" width="256" height="42" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="240" y="179" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Install-Shortcuts</text>
+<rect x="20" y="218" width="208" height="42" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="124" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Launcher.cs</text>
+<rect x="252" y="218" width="208" height="42" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="356" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Add-Type</text>
+<rect x="112" y="284" width="256" height="42" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="240" y="311" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">C# compiler</text>
+<rect x="112" y="350" width="256" height="42" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="240" y="377" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Temporary EXE</text>
+<rect x="112" y="416" width="256" height="42" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="240" y="443" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">Move or replace</text>
+<rect x="112" y="482" width="256" height="48" rx="8" fill="#ffffff" stroke="#60798f" stroke-width="1.5"/>
+<text x="240" y="512" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#182b3d">MonitorWallpaper.exe</text>
+</svg>
