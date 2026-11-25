@@ -1,54 +1,48 @@
 # Monitor Wallpaper アーキテクチャ
 
-モニターごとに壁紙をランダムに変更する Windows 10 / 11 向けユーティリティ。PowerShell がアプリケーション本体を担い、C# はコンソール非表示のランチャーと Windows API / COM 連携の2つの用途で利用する。
+モニターごとに壁紙をランダムに変更する Windows 10 / 11 向けツール。PowerShell が処理全体を管理し、C# がコンソールを表示しないランチャーと Windows API / COM との連携を担う。
 
 ## 1. 実行時のアーキテクチャ（Runtime Architecture）
 
 ![Runtime architecture](architecture-diagrams/runtime.svg)
 
-この図はツール全体の見取り図であり、実行に関係するリポジトリ内の7ファイルをすべて個別に示す。実線は起動・呼び出し・参照、破線の枠は C# ソースまたは設定ファイル、破線の矢印はビルド・コンパイルによる生成関係を示す。`Launcher.cs` は Setup 時のビルド入力であり、通常の起動時には生成済みの `MonitorWallpaper.exe` が実行される。`DesktopWallpaper.cs` は必要時に読み込まれ、生成されたクラスが PowerShell と同一プロセス内で実行される。バッチファイルとランチャーは Windows PowerShell 5.1（powershell.exe）を起動する。Wallpaper.ps1 はそのプロセス内で実行され、必要な場合に DesktopWallpaper.cs をコンパイルして読み込む。ランチャーはコンソールを表示せず、子プロセスの終了を待たないため、壁紙変更の終了コードは取得しない。
+実行に関わる7つのファイルと、生成物や OS の機能を示す。実線の矢印は起動・呼び出し・参照、破線の矢印はビルド・コンパイルを表す。破線の枠は C# ソースまたは設定ファイルを示す。
 
-| 層 | モジュール | 責務 |
+バッチファイルとランチャーは Windows PowerShell 5.1（`powershell.exe`）を起動する。`Launcher.cs` は Setup 時に EXE に変換し、`DesktopWallpaper.cs` は壁紙変更時に必要に応じてコンパイルする。
+
+| 層 | モジュール | 役割 |
 | --- | --- | --- |
-| ユーザーインターフェース | [Setup.bat](Setup.bat) | Setup を要求し、終了コードを伝搬する。 |
-| ユーザーインターフェース | [Reroll.bat](Reroll.bat) | Apply を要求し、終了コードを伝搬する。 |
-| ユーザーインターフェース | [StopStartup.bat](StopStartup.bat) | StopStartup を要求し、終了コードを伝搬する。 |
-| ユーザーインターフェース | [Launcher.cs](internal/Launcher.cs) | コンソールを表示せずに PowerShell を起動する。MonitorWallpaper.exe としてビルドされる。 |
-| アプリケーションロジック | [Wallpaper.ps1](internal/Wallpaper.ps1) | Action の振り分け、設定の読み込み、画像選択、ショートカット管理、排他制御、実行結果の記録 |
-| Windows 連携 | [DesktopWallpaper.cs](internal/DesktopWallpaper.cs) | モニターの識別、壁紙の取得・設定。EnumDisplayDevicesW と IDesktopWallpaper を利用する。 |
-| 設定 | [config.txt](config.txt) | モニターごとの random / keep と画像フォルダーを定義する。config.local.txt が存在する場合はそちらを優先する。 |
+| ユーザーインターフェース | [Setup.bat](Setup.bat) | Setup を実行し、終了コードを返す |
+| ユーザーインターフェース | [Reroll.bat](Reroll.bat) | Apply を実行し、終了コードを返す |
+| ユーザーインターフェース | [StopStartup.bat](StopStartup.bat) | StopStartup を実行し、終了コードを返す |
+| ユーザーインターフェース | [Launcher.cs](internal/Launcher.cs) | MonitorWallpaper.exe のソース。コンソールを表示せずに PowerShell を起動する |
+| アプリケーションロジック | [Wallpaper.ps1](internal/Wallpaper.ps1) | Action の振り分け、設定の読み込み、画像選択、ショートカット管理、排他制御、ログ出力 |
+| Windows 連携 | [DesktopWallpaper.cs](internal/DesktopWallpaper.cs) | モニターの識別、壁紙の取得・設定 |
+| 設定 | [config.txt](config.txt) | モニターごとの変更方法（random / keep）と画像フォルダーを指定する |
 | Windows 連携 | .NET / Windows Shell | ファイル操作、名前付き Mutex、WScript.Shell (COM) によるショートカット管理 |
 
-実装ファイル7つに加え、実行時の生成物・OS機能・任意のローカル設定も図に示す。readme.txt、architecture.md、図の SVG、.gitignore は実行に関与しないため図の対象外とする。以降の節ではビルドやランタイムコンパイルなど、個々の仕組みに焦点を当てる。
+readme.txt、architecture.md、図の SVG、.gitignore は実行に関わらないため、図には含めない。
 
-### Action の起動経路
+### Action と起動元
 
-| 起動元 | Action |
-| --- | --- |
-| [Setup.bat](Setup.bat) | Setup |
-| [Reroll.bat](Reroll.bat) | Apply |
-| [StopStartup.bat](StopStartup.bat) | StopStartup |
-| スタートメニューのショートカット | Apply |
-| スタートアップのショートカット | Startup |
+| Action | 起動元 | 処理内容 |
+| --- | --- | --- |
+| Setup | [Setup.bat](Setup.bat) | 設定と画像フォルダーを確認し、ランチャーをビルドしてショートカットを登録する。対応する旧版のスタートアップ登録も削除する |
+| Apply | [Reroll.bat](Reroll.bat)、スタートメニューのショートカット | random に設定されたモニターの壁紙を変更する |
+| Startup | スタートアップのショートカット | サインイン時に壁紙を変更する。対象モニターが見つからない場合は、約20秒を上限に再取得を試みる（API の処理時間などを除く） |
+| StopStartup | [StopStartup.bat](StopStartup.bat) | 対応するランチャーを参照する現行版・旧版のスタートアップショートカットを削除する。手動起動用のショートカットと EXE は残す |
 
-4 種類の Action は独立したスクリプトではなく、Wallpaper.ps1 内の処理分岐である。Setup は登録のみを行い、その場で壁紙を変更しない。Apply と Startup は共通の壁紙変更処理を利用し、keep の画面と設定にない画面は変更しない。Apply と Startup ではすべて keep の場合、DesktopWallpaper.cs のコンパイルを行わない。
-
-| Action | 責務 |
-| --- | --- |
-| Setup | 設定と画像フォルダーを検証し、ランチャーをビルドしてショートカットを登録する。対象が一致する旧版のスタートアップ登録も削除する。 |
-| Apply | random に設定されたモニターの壁紙を変更する。 |
-| Startup | Windows サインイン時に壁紙を変更する。対象のモニターが未認識の場合は約 20 秒を上限に再取得を試みる（API 呼び出し時間などを除く）。 |
-| StopStartup | 対応するランチャーを指している現行版・旧版のスタートアップショートカットのみ削除する。手動起動用のショートカットと EXE は維持する。 |
+4つの Action は `Wallpaper.ps1` 内で処理を切り替える。Setup では壁紙を変更しない。Apply と Startup は壁紙変更処理を共有し、keep に設定したモニターや設定にないモニターは変更しない。すべて keep の場合は DesktopWallpaper.cs のコンパイルも行わない。
 
 ## 2. ビルド時のアーキテクチャ（Build Architecture）
 
-Setup の実行時に、利用者の PC 上でランチャーをビルドする。Windows PowerShell 5.1 の機能を利用するため、Visual Studio や別途 .NET SDK をインストールする必要はない。
+Setup 時に利用者の PC でランチャーをビルドする。Windows PowerShell 5.1 のコンパイル機能を使うため、Visual Studio や追加の .NET SDK は不要。
 
 ![Launcher build architecture](architecture-diagrams/build.svg)
 
-Windows PowerShell 5.1 は .NET Framework の C# コンパイル機構を利用する。生成されるランチャーは、コンソールアプリケーションではなく、マネージドコードの Windows GUI アプリケーションである。EXE には CIL（中間言語）と型情報などが含まれ、実行時に CLR が必要なメソッドを JIT コンパイルする。
+Windows PowerShell 5.1 は .NET Framework の C# コンパイル機構を利用する。生成される EXE は Windows GUI アプリケーションであり、CIL（中間言語）と型情報などを含む。実行時に CLR が必要なメソッドを JIT コンパイルする。
 
-Wallpaper.ps1 内のビルド処理は以下のとおり。
+Wallpaper.ps1 のビルド処理：
 
 ```powershell
 Add-Type -LiteralPath (Join-Path $PSScriptRoot 'Launcher.cs') `
@@ -57,30 +51,34 @@ Add-Type -LiteralPath (Join-Path $PSScriptRoot 'Launcher.cs') `
     -OutputType WindowsApplication
 ```
 
-| ビルドオプション | 役割 |
+| オプション | 役割 |
 | --- | --- |
-| LiteralPath | コンパイル対象の C# ソースファイルを指定する。 |
-| ReferencedAssemblies | 警告ダイアログの表示に必要な Windows Forms を参照する。 |
-| OutputAssembly | 一意な名前の一時 EXE ファイルを出力する。 |
-| OutputType | Windows GUI アプリケーション形式で生成する。 |
+| LiteralPath | C# ソースファイルの指定 |
+| ReferencedAssemblies | 警告ダイアログに使う Windows Forms の参照 |
+| OutputAssembly | 一意な名前の一時 EXE の出力 |
+| OutputType | Windows GUI アプリケーション形式の指定 |
 
-Setup は一時 EXE を正式な配置先へ移動または置換した後、WScript.Shell を利用してスタートメニューとスタートアップのショートカットを生成する。どちらも MonitorWallpaper.exe を起動し、Wallpaper.ps1 の絶対パスと対応する Action を引数として渡す。
+Setup は一時 EXE を正式な配置先に移動または置換し、WScript.Shell でスタートメニューとスタートアップのショートカットを作成する。どちらも MonitorWallpaper.exe を起動し、Wallpaper.ps1 の絶対パスと Action を渡す。
 
-### インストール済みランチャーの起動経路
+### ランチャーの起動経路
 
 ![Installed launcher](architecture-diagrams/launcher.svg)
 
-ランチャーは Process.Start を使用し、UseShellExecute を false、CreateNoWindow を true に設定して PowerShell を起動する。また、スクリプト独自の Hidden スイッチを渡す。起動失敗時は Apply の場合のみ警告を表示する。スクリプト内部のエラーは Wallpaper.ps1 側で処理する。
+ランチャーは Process.Start で PowerShell を起動する。UseShellExecute を false、CreateNoWindow を true に設定し、スクリプト独自の Hidden スイッチも渡す。
 
-## 3. 実行時コンパイルと同一プロセス内での呼び出し（In-memory Compilation）
+子プロセスの終了を待たないため、壁紙変更の終了コードは取得しない。起動に失敗した場合は Apply のときだけ警告を表示し、スクリプト内のエラーは Wallpaper.ps1 が処理する。
 
-Apply または Startup で壁紙変更が必要な場合、DesktopWallpaper.cs を実行時にコンパイルする。
+## 3. 実行時コンパイル（In-memory Compilation）
 
-**PowerShell と C# は共通の .NET ランタイム（CLR）を利用するため、C# のクラスを EXE にして別プロセスとして起動しなくても、PowerShell から直接生成・呼び出しできる。** 今回は Add-Type でコンパイルしたアセンブリを実行中の powershell.exe にロードしており、PowerShell と C# のメソッド呼び出しは同じプロセス内で完結する。両者間の IPC（プロセス間通信）は不要である。
+Apply または Startup で壁紙を変更する際、DesktopWallpaper.cs をコンパイルする。
+
+**PowerShell と C# は同じ .NET ランタイム（CLR）を利用するため、C# を EXE にして別プロセスで起動しなくても、PowerShell からクラスのインスタンスを生成し、メソッドを直接呼び出せる。**
+
+Add-Type でコンパイルしたアセンブリを実行中の powershell.exe に読み込む。メソッドの呼び出しは同じプロセス内で行うため、両者間の IPC（プロセス間通信）は不要。
 
 ![In-process C# compilation](architecture-diagrams/in-memory.svg)
 
-実際の Wallpaper.ps1 では次のようにクラスを読み込み、インスタンスを生成している。
+Wallpaper.ps1 の読み込み・呼び出し処理：
 
 ```powershell
 Add-Type -LiteralPath (Join-Path $PSScriptRoot 'DesktopWallpaper.cs')
@@ -88,29 +86,31 @@ $desktop = [MyTools.MonitorWallpaper.DesktopWallpaper]::new()
 $monitors = $desktop.GetMonitors()
 ```
 
-壁紙の変更時は `$desktop.SetWallpaper($monitor.Id, $image.FullName)` を呼び出す。C# のアセンブリには CIL と型情報などが含まれ、CLR が必要なメソッドを JIT コンパイルして実行する。壁紙変更専用の独立した EXE や永続的な DLL は生成しない。ただし、コンパイラ内部の一時ファイルやコンパイラプロセスまで存在しないという意味ではない。
+壁紙の変更には `$desktop.SetWallpaper($monitor.Id, $image.FullName)` を使う。CLR はアセンブリ内の CIL を必要に応じて JIT コンパイルする。壁紙変更用の EXE や DLL は保存しないが、コンパイラが一時ファイルや別プロセスを利用する場合はある。
 
-C# 側は P/Invoke により user32.dll の EnumDisplayDevicesW を呼び出し、COM の IDesktopWallpaper を通して壁紙を取得・設定する。モニターのデバイスパスを照合して対象を特定する。壁紙変更処理が終わると Dispose() で COM オブジェクトを解放する。
+C# は P/Invoke で user32.dll の EnumDisplayDevicesW を呼び出し、モニターのデバイスパスを照合する。COM の IDesktopWallpaper で壁紙を取得・設定し、処理終了時に Dispose() で COM オブジェクトを解放する。
 
 | 比較項目 | Launcher.cs | DesktopWallpaper.cs |
 | --- | --- | --- |
-| コンパイル時期 | Setup | Apply または Startup（必要時） |
+| コンパイル時期 | Setup | Apply / Startup（必要時） |
 | 生成物 | Windows GUI アプリケーション（EXE） | メモリ上のアセンブリ |
-| 実行形態 | 独立したプロセス | PowerShell プロセス内 |
+| 実行場所 | 独立したプロセス | PowerShell プロセス内 |
 | 目的 | PowerShell の起動 | Windows API / COM の操作 |
 
 ## 4. 共有リソースと排他制御
 
-すべての Action は、主処理に入る前に同じ名前付き Mutex（`Local\Freely.MonitorWallpaper`）の取得を試みる。同一 Windows セッション内で、同じ Mutex を使用するプロセスの主処理の同時実行を防ぐ。取得後は壁紙変更時のログ書き込みまでロックを保持し、finally で解放する。取得待ちのタイムアウトは 30 秒であり、取得できなければ主処理を実行せず異常終了する。別の壁紙アプリなど、同じ Mutex を使わない処理は制限しない。
+すべての Action は主処理の前に同じ名前付き Mutex（`Local\Freely.MonitorWallpaper`）の取得を試みる。同じ Windows セッション内で、この Mutex を使う処理の同時実行を防ぐ。
 
-旧版のツールとの排他制御の互換性を維持するため、Mutex 名は意図的に旧版の名称を使用している。
+30秒以内に取得できなければ異常終了する。取得後は処理とログ出力が終わるまでロックを保持し、finally で解放する。他の壁紙アプリの動作は制限しない。
+
+旧版との排他制御の互換性を保つため、Mutex 名は変更していない。
 
 | リソース | 保存先・動作 |
 | --- | --- |
 | 既定の設定 | [config.txt](config.txt) |
-| ローカル設定 | config.local.txt が存在する場合は優先する。 |
-| インストール済みランチャー | `%LOCALAPPDATA%\MyTools\MonitorWallpaper\MonitorWallpaper.exe` |
-| 実行ログ | Apply / Startup がロックを取得した場合に、同じデータフォルダーの last-reroll.txt / last-startup.txt をそれぞれ更新する。 |
+| ローカル設定 | config.local.txt があれば優先して読み込む |
+| ランチャー | `%LOCALAPPDATA%\MyTools\MonitorWallpaper\MonitorWallpaper.exe` |
+| 実行ログ | 同じフォルダーの last-reroll.txt（Apply）、last-startup.txt（Startup）。Mutex を取得した場合に更新する |
 | ショートカット | 現在のユーザーのスタートメニューとスタートアップフォルダー |
 
-ショートカットは Setup を実行したフォルダーを参照する。ツールを移動した場合は、移動先で Setup.bat を実行して登録を更新する。
+ショートカットは Setup を実行したフォルダーを参照する。ツールを移動した場合は、移動先の Setup.bat で登録を更新する。
