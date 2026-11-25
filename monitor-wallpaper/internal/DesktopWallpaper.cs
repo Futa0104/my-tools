@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
-namespace Freely.MonitorWallpaper
+namespace MyTools.MonitorWallpaper
 {
     public sealed class DesktopWallpaper : IDisposable
     {

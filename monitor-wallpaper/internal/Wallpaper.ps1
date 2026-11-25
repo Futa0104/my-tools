@@ -6,9 +6,17 @@
 )
 
 $ErrorActionPreference = 'Stop'
-$configPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'config.txt'
-$dataFolder = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Freely\MonitorWallpaper'
-$startupPath = Join-Path ([Environment]::GetFolderPath('Startup')) 'Freely Monitor Wallpaper.lnk'
+$toolFolder = Split-Path -Parent $PSScriptRoot
+$configPath = Join-Path $toolFolder 'config.txt'
+$localConfigPath = Join-Path $toolFolder 'config.local.txt'
+if ([IO.File]::Exists($localConfigPath)) { $configPath = $localConfigPath }
+$configName = [IO.Path]::GetFileName($configPath)
+$localAppData = [Environment]::GetFolderPath('LocalApplicationData')
+$dataFolder = Join-Path $localAppData 'MyTools\MonitorWallpaper'
+$startupFolder = [Environment]::GetFolderPath('Startup')
+$startupPath = Join-Path $startupFolder 'My Tools Monitor Wallpaper.lnk'
+$legacyStartupPath = Join-Path $startupFolder 'Freely Monitor Wallpaper.lnk'
+$legacyLauncherPath = Join-Path $localAppData 'Freely\MonitorWallpaper\MonitorWallpaper.exe'
 $menuPath = Join-Path ([Environment]::GetFolderPath('Programs')) '壁紙を引き直す.lnk'
 $launcherPath = Join-Path $dataFolder 'MonitorWallpaper.exe'
 
@@ -20,14 +28,14 @@ function Read-MonitorSettings {
         $line = $rawLine.Trim()
         if (!$line -or $line.StartsWith('#')) { continue }
         if ($line -notmatch '^((?:Monitor|Folder)([1-9][0-9]*))\s*=\s*(.*)$') {
-            throw "config.txt の ${lineNumber} 行目を確認してください。"
+            throw "$configName の ${lineNumber} 行目を確認してください。"
         }
         $key = $Matches[1]
         $number = 0
         if (![int]::TryParse($Matches[2], [ref]$number)) {
-            throw "config.txt の ${lineNumber} 行目の画面番号を確認してください。"
+            throw "$configName の ${lineNumber} 行目の画面番号を確認してください。"
         }
-        if ($settings.ContainsKey($key)) { throw "config.txt に $key が2回書かれています。" }
+        if ($settings.ContainsKey($key)) { throw "$configName に $key が2回書かれています。" }
         $settings[$key] = $Matches[3].Trim().Trim('"')
     }
 
@@ -36,20 +44,20 @@ function Read-MonitorSettings {
             if ($key -match '^Monitor([0-9]+)$') {
                 [int]$Matches[1]
             } elseif ($key -match '^Folder([0-9]+)$' -and !$settings.ContainsKey("Monitor$($Matches[1])")) {
-                throw "config.txt に Monitor$($Matches[1]) がありません。"
+                throw "$configName に Monitor$($Matches[1]) がありません。"
             }
         }
     )
-    if ($numbers.Count -eq 0) { throw 'config.txt に Monitor1 などの画面番号を書いてください。' }
+    if ($numbers.Count -eq 0) { throw "$configName に Monitor1 などの画面番号を書いてください。" }
 
     foreach ($number in ($numbers | Sort-Object)) {
         $mode = $settings["Monitor$number"]
         if ($mode -notin 'random', 'keep') {
-            throw "config.txt の Monitor$number に random または keep を書いてください。"
+            throw "$configName の Monitor$number に random または keep を書いてください。"
         }
         $folder = $settings["Folder$number"]
         if ($mode -eq 'random' -and $folder -notmatch '^(?:[A-Za-z]:[\\/]|\\\\)') {
-            throw "Folder$number に、C:\ から始まるようなフォルダーの場所を入力してください。"
+            throw "$configName の Folder$number に、C:\ から始まるようなフォルダーの場所を入力してください。"
         }
         [pscustomobject]@{ Number = $number; Mode = $mode; Folder = $folder }
     }
@@ -58,13 +66,22 @@ function Read-MonitorSettings {
 function Get-ImageFiles($setting) {
     $folder = $setting.Folder
     if (!(Test-Path -LiteralPath $folder -PathType Container)) {
-        throw "フォルダーが見つかりません ($folder)。config.txt の Folder$($setting.Number) を確認してください。"
+        throw "フォルダーが見つかりません ($folder)。$configName の Folder$($setting.Number) を確認してください。"
     }
     $files = @(Get-ChildItem -LiteralPath $folder -File | Where-Object Extension -in '.jpg', '.jpeg', '.jfif', '.png', '.bmp')
     if ($files.Count -eq 0) {
         throw "フォルダーの直下に使える画像がありません ($folder)。JPG、JPEG、JFIF、PNG、BMP が使えます。"
     }
     $files
+}
+
+function Remove-StartupShortcut($path, $target) {
+    if (![IO.File]::Exists($path)) { return }
+
+    $shell = New-Object -ComObject WScript.Shell
+    if ($shell.CreateShortcut($path).TargetPath -eq $target) {
+        [IO.File]::Delete($path)
+    }
 }
 
 function Install-Shortcuts {
@@ -91,6 +108,7 @@ function Install-Shortcuts {
         $shortcut.Description = 'モニターごとの設定に従って壁紙を引き直します。'
         $shortcut.Save()
     }
+    Remove-StartupShortcut $legacyStartupPath $legacyLauncherPath
 }
 
 function Set-RandomWallpaper($desktop, $monitor, $setting) {
@@ -120,6 +138,7 @@ $logPath = Join-Path $dataFolder $logName
 $records = [System.Collections.Generic.List[string]]::new()
 $errors = [System.Collections.Generic.List[string]]::new()
 $recordRun = $Action -in 'Apply', 'Startup'
+# Share the lock with copies that were still launched from the old shortcuts.
 $mutex = [Threading.Mutex]::new($false, 'Local\Freely.MonitorWallpaper')
 $locked = $false
 
@@ -132,7 +151,8 @@ try {
     if (!$locked) { throw '壁紙ランダムが実行中です。少し待ってからもう一度お試しください。' }
 
     if ($Action -eq 'StopStartup') {
-        if ([IO.File]::Exists($startupPath)) { [IO.File]::Delete($startupPath) }
+        Remove-StartupShortcut $startupPath $launcherPath
+        Remove-StartupShortcut $legacyStartupPath $legacyLauncherPath
         $records.Add('サインイン時の自動実行を止めました。')
     } else {
         $settings = @(Read-MonitorSettings)
@@ -147,7 +167,7 @@ try {
             $records.Add('すべてのモニターが keep の設定です。')
         } else {
             Add-Type -LiteralPath (Join-Path $PSScriptRoot 'DesktopWallpaper.cs')
-            $desktop = [Freely.MonitorWallpaper.DesktopWallpaper]::new()
+            $desktop = [MyTools.MonitorWallpaper.DesktopWallpaper]::new()
             try {
                 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers'
                 $background = (Get-ItemProperty -LiteralPath $key -ErrorAction SilentlyContinue).BackgroundType

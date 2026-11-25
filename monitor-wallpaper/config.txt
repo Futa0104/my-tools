@@ -1,9 +1,9 @@
 ﻿# Windows の「設定 → システム → ディスプレイ → 識別」の番号を使います。
 # random = 指定フォルダーからランダムに変更、keep = 今の壁紙のまま
-# keep の画面の Folder は空欄で構いません。
+# random にする画面の Folder に、画像フォルダーの場所を書きます。
 
-Monitor1 = random
-Folder1 = C:\MyHome\Desk
+Monitor1 = keep
+Folder1 =
 
 Monitor2 = keep
 Folder2 =
